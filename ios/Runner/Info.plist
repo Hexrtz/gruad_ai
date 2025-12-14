@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>แอปนี้ต้องการใช้กล้องเพื่อถ่ายรูปและวิเคราะห์เพลี้ยและใบข้าว</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>แอปนี้ต้องการเข้าถึงรูปภาพเพื่อวิเคราะห์</string>
 </dict>
 </plist>

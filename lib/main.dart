@@ -1,40 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:tflite_flutter/tflite_flutter.dart';
-import 'dart:io';
+import 'screens/splash_screen.dart';
 
-void main() => runApp(const MaterialApp(home: PestApp()));
+void main() => runApp(const MyApp());
 
-class PestApp extends StatefulWidget {
-  const PestApp({super.key});
-  @override
-  State<PestApp> createState() => _PestAppState();
-}
-
-class _PestAppState extends State<PestApp> {
-  Interpreter? _interpreter;
-  String _status = "กำลังโหลดโมเดล...";
-
-  @override
-  void initState() {
-    super.initState();
-    _initModel();
-  }
-
-  Future<void> _initModel() async {
-    try {
-      // โหลดโมเดล
-      _interpreter = await Interpreter.fromAsset('assets/yolov8n.tflite');
-      setState(() => _status = "✅ โมเดลพร้อมใช้งาน (YOLOv8)");
-    } catch (e) {
-      setState(() => _status = "❌ โหลดโมเดลไม่สำเร็จ: $e");
-    }
-  }
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Pest Detection AI")), // แก้จาก app_bar เป็น appBar
-      body: Center(child: Text(_status)),
+    return MaterialApp(
+      title: 'Gruad AI - ระบบวิเคราะห์โรคพืช',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.green,
+          brightness: Brightness.light,
+        ),
+        cardTheme: const CardThemeData(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(16)),
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            elevation: 4,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ),
+      home: const SplashScreen(),
     );
   }
 }
