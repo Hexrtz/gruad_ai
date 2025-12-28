@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'pest_camera_screen.dart';
+import 'select_area_screen.dart';
 import 'leaf_analysis_screen.dart';
 import 'realtime_pest_detection_screen.dart';
 
@@ -9,215 +9,222 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.green.shade50,
-              Colors.white,
-              Colors.green.shade50,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.green.shade400,
-                      Colors.green.shade600,
+      backgroundColor: const Color(0xFFE8F5E9), // Light mint green background
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // App Logo
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4CAF50),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.eco,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Weather Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.green.withValues(alpha: 0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.2),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '28°C',
+                            style: TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2E7D32),
+                            ),
+                          ),
+                          Text(
+                            'อากาศแจ่มใส ท้องฟ้าโปร่ง',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.wb_sunny,
+                            color: Colors.amber.shade400,
+                            size: 32,
+                          ),
+                          const SizedBox(width: 16),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.water_drop_outlined,
+                                color: Colors.blue.shade300,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 4),
+                              const Text(
+                                '75%',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF2E7D32),
+                                ),
                               ),
                             ],
                           ),
-                          child: const Icon(
-                            Icons.agriculture,
-                            size: 40,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Gruad AI',
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                shadows: [
-                                  Shadow(
-                                    blurRadius: 10.0,
-                                    color: Colors.black26,
-                                    offset: Offset(2.0, 2.0),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Text(
-                              'ระบบวิเคราะห์โรคพืช',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      child: const Text(
-                        'เลือกฟีเจอร์ที่ต้องการ',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Feature Cards
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
-                  child: Column(
-                    children: [
-                      // Card วิเคราะห์เพลี้ย
-                      _FeatureCard(
-                        icon: Icons.bug_report,
-                        title: 'วิเคราะห์เพลี้ยกระโดดสีน้ำตาล',
-                        subtitle: 'ถ่ายรูปและนับจำนวนเพลี้ยอัตโนมัติ',
-                        color: Colors.orange,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Colors.orange.shade400, Colors.orange.shade600],
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const PestCameraScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      // Card Real-time Detection
-                      _FeatureCard(
-                        icon: Icons.videocam,
-                        title: 'ตรวจจับเพลี้ยแบบ Real-time',
-                        subtitle: 'เปิดกล้องและตรวจจับเพลี้ยแบบเรียลไทม์',
-                        color: Colors.purple,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Colors.purple.shade400, Colors.purple.shade600],
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const RealtimePestDetectionScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      // Card วิเคราะห์ใบข้าว
-                      _FeatureCard(
-                        icon: Icons.eco,
-                        title: 'วิเคราะห์สีใบข้าว',
-                        subtitle: 'ตรวจสอบความเขียวของใบข้าว',
-                        color: Colors.green,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Colors.green.shade400, Colors.green.shade600],
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LeafAnalysisScreen(),
-                            ),
-                          );
-                        },
+                        ],
                       ),
                     ],
                   ),
                 ),
-              ),
-              // Footer
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Row(
+                const SizedBox(height: 40),
+
+                // Scan Rice Button - Big Circle
+                Center(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SelectAreaScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 180,
+                      height: 180,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4CAF50),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF4CAF50).withValues(alpha: 0.4),
+                            blurRadius: 30,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 48,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'สแกนข้าว',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Additional Feature Buttons
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.agriculture,
-                      size: 18,
-                      color: Colors.green.shade400,
+                    _MiniFeatureButton(
+                      icon: Icons.videocam,
+                      label: 'ตรวจจับสด',
+                      color: Colors.purple,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RealtimePestDetectionScreen(),
+                          ),
+                        );
+                      },
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'พัฒนาเพื่อเกษตรกรไทย',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    const SizedBox(width: 16),
+                    _MiniFeatureButton(
+                      icon: Icons.eco,
+                      label: 'สีใบข้าว',
+                      color: Colors.teal,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LeafAnalysisScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 40),
+
+                // Recent Scan History
+                const Text(
+                  'ประวัติการสแกน',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2E7D32),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // History Items
+                _HistoryItem(
+                  imageColor: Colors.green.shade300,
+                  status: 'ปลอดภัย',
+                  statusColor: const Color(0xFF4CAF50),
+                  time: '2 ชั่วโมงที่แล้ว',
+                ),
+                _HistoryItem(
+                  imageColor: Colors.orange.shade300,
+                  status: 'เสี่ยง',
+                  statusColor: const Color(0xFFF44336),
+                  time: 'เมื่อวาน 15:00 น.',
+                ),
+                _HistoryItem(
+                  imageColor: Colors.green.shade400,
+                  status: 'ปลอดภัย',
+                  statusColor: const Color(0xFF4CAF50),
+                  time: '2 วันที่แล้ว',
+                ),
+                _HistoryItem(
+                  imageColor: Colors.amber.shade300,
+                  status: 'เสี่ยง',
+                  statusColor: const Color(0xFFF44336),
+                  time: '5 วันที่แล้ว',
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -225,153 +232,140 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _FeatureCard extends StatefulWidget {
+class _MiniFeatureButton extends StatelessWidget {
   final IconData icon;
-  final String title;
-  final String subtitle;
+  final String label;
   final Color color;
-  final Gradient gradient;
   final VoidCallback onTap;
 
-  const _FeatureCard({
+  const _MiniFeatureButton({
     required this.icon,
-    required this.title,
-    required this.subtitle,
+    required this.label,
     required this.color,
-    required this.gradient,
     required this.onTap,
   });
 
   @override
-  State<_FeatureCard> createState() => _FeatureCardState();
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class _FeatureCardState extends State<_FeatureCard> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
+class _HistoryItem extends StatelessWidget {
+  final Color imageColor;
+  final String status;
+  final Color statusColor;
+  final String time;
 
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
+  const _HistoryItem({
+    required this.imageColor,
+    required this.status,
+    required this.statusColor,
+    required this.time,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) {
-        _animationController.forward();
-      },
-      onTapUp: (_) {
-        _animationController.reverse();
-        widget.onTap();
-      },
-      onTapCancel: () {
-        _animationController.reverse();
-      },
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: widget.gradient,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: widget.color.withValues(alpha: 0.4),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-                spreadRadius: 0,
-              ),
-            ],
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: widget.onTap,
-              borderRadius: BorderRadius.circular(24),
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                child: Row(
-                  children: [
-                    // Icon
-                    Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.25),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        widget.icon,
-                        size: 36,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    // Text
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.title,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            widget.subtitle,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white.withValues(alpha: 0.95),
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Arrow
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.arrow_forward_ios,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Thumbnail
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: imageColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.grass,
+              color: Colors.white.withValues(alpha: 0.8),
+              size: 28,
             ),
           ),
-        ),
+          const SizedBox(width: 16),
+          // Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    status,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  time,
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Arrow
+          Icon(
+            Icons.chevron_right,
+            color: Colors.grey.shade400,
+            size: 24,
+          ),
+        ],
       ),
     );
   }

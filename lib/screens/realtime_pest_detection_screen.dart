@@ -25,6 +25,14 @@ class _RealtimePestDetectionScreenState
   PestAnalysisService? _analysisService;
   PestResult? _currentResult;
   int _totalPestsDetected = 0;
+  
+  // Zoom and Focus
+  double _currentZoom = 1.0;
+  double _minZoom = 1.0;
+  double _maxZoom = 1.0;
+  double _baseZoom = 1.0;
+  Offset? _focusPoint;
+  bool _showFocusIndicator = false;
 
   @override
   void initState() {
@@ -66,6 +74,11 @@ class _RealtimePestDetectionScreenState
 
       await _controller!.initialize();
       
+      // Initialize zoom levels
+      _minZoom = await _controller!.getMinZoomLevel();
+      _maxZoom = await _controller!.getMaxZoomLevel();
+      _currentZoom = _minZoom;
+      
       if (mounted) {
         setState(() {
           _isInitialized = true;
@@ -103,6 +116,96 @@ class _RealtimePestDetectionScreenState
         );
       }
     }
+  }
+
+  // Zoom functions
+  Future<void> _setZoomLevel(double zoom) async {
+    if (_controller == null || !_controller!.value.isInitialized) return;
+    
+    final newZoom = zoom.clamp(_minZoom, _maxZoom);
+    await _controller!.setZoomLevel(newZoom);
+    setState(() {
+      _currentZoom = newZoom;
+    });
+  }
+
+  void _handleScaleStart(ScaleStartDetails details) {
+    _baseZoom = _currentZoom;
+  }
+
+  void _handleScaleUpdate(ScaleUpdateDetails details) {
+    final newZoom = (_baseZoom * details.scale).clamp(_minZoom, _maxZoom);
+    _setZoomLevel(newZoom);
+  }
+
+  // Focus functions
+  Future<void> _handleTapToFocus(TapDownDetails details, BoxConstraints constraints) async {
+    if (_controller == null || !_controller!.value.isInitialized) return;
+
+    final x = details.localPosition.dx / constraints.maxWidth;
+    final y = details.localPosition.dy / constraints.maxHeight;
+
+    try {
+      await _controller!.setFocusPoint(Offset(x, y));
+      await _controller!.setExposurePoint(Offset(x, y));
+      
+      setState(() {
+        _focusPoint = details.localPosition;
+        _showFocusIndicator = true;
+      });
+
+      // Hide focus indicator after 1.5 seconds
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) {
+          setState(() {
+            _showFocusIndicator = false;
+          });
+        }
+      });
+    } catch (e) {
+      debugPrint('Focus error: $e');
+    }
+  }
+
+  Widget _buildZoomChip(double zoom, String label) {
+    final isActive = (_currentZoom - zoom).abs() < 0.1;
+    final targetZoom = zoom.clamp(_minZoom, _maxZoom);
+    final isAvailable = zoom >= _minZoom && zoom <= _maxZoom;
+    
+    return GestureDetector(
+      onTap: isAvailable ? () => _setZoomLevel(targetZoom) : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: isActive
+              ? Colors.purple
+              : isAvailable 
+                  ? Colors.white.withValues(alpha: 0.15)
+                  : Colors.white.withValues(alpha: 0.05),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isActive 
+                ? Colors.purple 
+                : isAvailable
+                    ? Colors.white.withValues(alpha: 0.3)
+                    : Colors.white.withValues(alpha: 0.1),
+            width: 1.5,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isAvailable ? Colors.white : Colors.white.withValues(alpha: 0.3),
+              fontSize: 11,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _startRealtimeDetection() {
@@ -358,63 +461,25 @@ class _RealtimePestDetectionScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.videocam, size: 24),
-            ),
-            const SizedBox(width: 12),
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'ตรวจจับ Real-time',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-                Text(
-                  'ตรวจจับเพลี้ยแบบสด',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.normal,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.purple.shade400, Colors.purple.shade600],
-            ),
-          ),
-        ),
-      ),
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
           // กล้อง
           if (_isInitialized && _controller != null)
             SizedBox.expand(
-              child: Stack(
-                children: [
-                  CameraPreview(_controller!),
-                  // วาด bounding boxes แบบ real-time
-                  if (_currentResult != null && _currentResult!.detections.isNotEmpty)
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        return CustomPaint(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return Stack(
+                    children: [
+                      GestureDetector(
+                        onScaleStart: _handleScaleStart,
+                        onScaleUpdate: _handleScaleUpdate,
+                        onTapDown: (details) => _handleTapToFocus(details, constraints),
+                        child: CameraPreview(_controller!),
+                      ),
+                      // วาด bounding boxes แบบ real-time
+                      if (_currentResult != null && _currentResult!.detections.isNotEmpty)
+                        CustomPaint(
                           painter: RealtimeBoundingBoxPainter(
                             detections: _currentResult!.detections,
                             previewWidth: _controller!.value.previewSize?.height ?? 1,
@@ -423,10 +488,111 @@ class _RealtimePestDetectionScreenState
                             displayHeight: constraints.maxHeight,
                           ),
                           child: const SizedBox.expand(),
-                        );
-                      },
-                    ),
-                ],
+                        ),
+                      // Focus indicator
+                      if (_showFocusIndicator && _focusPoint != null)
+                        Positioned(
+                          left: _focusPoint!.dx - 30,
+                          top: _focusPoint!.dy - 30,
+                          child: TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 1.2, end: 1.0),
+                            duration: const Duration(milliseconds: 200),
+                            builder: (context, scale, child) {
+                              return Transform.scale(
+                                scale: scale,
+                                child: Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: Colors.yellow,
+                                      width: 2,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.center_focus_strong,
+                                    color: Colors.yellow,
+                                    size: 24,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      // Zoom controls - compact left side
+                      Positioned(
+                        left: 12,
+                        bottom: 120,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Zoom level
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.purple,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '${_currentZoom.toStringAsFixed(1)}x',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              // Zoom buttons
+                              _buildZoomChip(1.0, '1x'),
+                              const SizedBox(height: 4),
+                              _buildZoomChip(2.0, '2x'),
+                              const SizedBox(height: 4),
+                              _buildZoomChip(3.0, '3x'),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Tap to focus hint
+                      if (!_showFocusIndicator)
+                        Positioned(
+                          top: 200,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.4),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.touch_app, color: Colors.white.withValues(alpha: 0.8), size: 14),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'แตะเพื่อโฟกัส',
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(alpha: 0.8),
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
             )
           else
@@ -439,229 +605,139 @@ class _RealtimePestDetectionScreenState
               ),
             ),
           
-          // Overlay gradient บนสุด
+          // Top bar with close button
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                  // Stats pill
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.bug_report, color: Colors.white, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          'รวม: $_totalPestsDetected',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
+                          width: 1,
+                          height: 16,
+                          color: Colors.white.withValues(alpha: 0.5),
+                        ),
+                        const Icon(Icons.visibility, color: Colors.white, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          'ตรวจพบ: ${_currentResult?.detections.length ?? 0}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 48),
+                ],
+              ),
+            ),
+          ),
+          
+          // Bottom section with gradient and control button
           Positioned(
-            top: 0,
             left: 0,
             right: 0,
-            height: 100,
+            bottom: 0,
             child: Container(
+              padding: const EdgeInsets.fromLTRB(20, 40, 20, 50),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
+                    Colors.transparent,
                     Colors.black.withValues(alpha: 0.7),
-                    Colors.transparent,
                   ],
                 ),
               ),
-            ),
-          ),
-          
-          // สถิติด้านบน
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 10,
-            left: 16,
-            right: 16,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.purple.shade400,
-                    Colors.purple.shade600,
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.purple.withValues(alpha: 0.5),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                    spreadRadius: 0,
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+              child: Column(
                 children: [
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.25),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.bug_report, color: Colors.white, size: 28),
+                  // Start/Stop button
+                  GestureDetector(
+                    onTap: () {
+                      if (_isDetecting) {
+                        _stopDetection();
+                      } else {
+                        _startRealtimeDetection();
+                      }
+                      setState(() {});
+                    },
+                    child: Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _isDetecting ? Colors.red : Colors.green,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          width: 4,
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '$_totalPestsDetected',
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 1,
+                        boxShadow: [
+                          BoxShadow(
+                            color: (_isDetecting ? Colors.red : Colors.green)
+                                .withValues(alpha: 0.4),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
                           ),
-                        ),
-                        const Text(
-                          'ตัวทั้งหมด',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white70,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    width: 1,
-                    height: 60,
-                    color: Colors.white.withValues(alpha: 0.3),
-                  ),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.25),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.visibility, color: Colors.white, size: 28),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _currentResult != null
-                              ? '${_currentResult!.detections.length}'
-                              : '0',
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        const Text(
-                          'ตรวจจับได้',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white70,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          
-          // Overlay gradient ด้านล่าง
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 150,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.8),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          
-          // ปุ่มควบคุมด้านล่าง
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // ปุ่มเริ่ม/หยุด
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          if (_isDetecting) {
-                            _stopDetection();
-                          } else {
-                            _startRealtimeDetection();
-                          }
-                          setState(() {});
-                        },
-                        borderRadius: BorderRadius.circular(30),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 18,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: _isDetecting
-                                  ? [Colors.red.shade400, Colors.red.shade600]
-                                  : [Colors.green.shade400, Colors.green.shade600],
-                            ),
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: (_isDetecting ? Colors.red : Colors.green)
-                                    .withValues(alpha: 0.5),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8),
-                                spreadRadius: 0,
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.25),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  _isDetecting ? Icons.stop_rounded : Icons.play_arrow_rounded,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                _isDetecting ? 'หยุดตรวจจับ' : 'เริ่มตรวจจับ',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        ],
+                      ),
+                      child: Icon(
+                        _isDetecting ? Icons.stop : Icons.play_arrow,
+                        color: Colors.white,
+                        size: 36,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _isDetecting ? 'แตะเพื่อหยุดตรวจจับ' : 'แตะเพื่อเริ่มตรวจจับแบบเรียลไทม์',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
